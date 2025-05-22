@@ -9,6 +9,7 @@ use serde::Serialize;
 pub mod dkg;
 pub mod presign;
 pub mod sign;
+pub mod localagg;
 
 /// 2PC-MPC error.
 #[derive(thiserror::Error, Debug)]
@@ -813,5 +814,51 @@ pub mod secp256k1 {
     }
 }
 
-#[cfg(feature = "benchmarking")]
-criterion::criterion_group!(benches, sign::benchmark);
+// #[cfg(feature = "benchmarking")]
+// criterion::criterion_group!(benches, sign::benchmark);
+
+
+
+
+use tiresias::LargeBiPrimeSizedNumber;
+use wasm_bindgen::prelude::*;
+
+#[cfg(all(
+    any(test, feature = "benchmarking", feature = "softbenchmarking"),
+    feature = "secp256k1",
+    feature = "paillier",
+    feature = "bulletproofs",
+))]
+#[wasm_bindgen]
+pub fn greet(name: &str) -> String {
+    
+    // sign::benches::b(2, 8, 1);
+    sign::tests::dkg_presign_signs_internal(2, 8, 1);
+    format!("Hello, {}!", name)
+}
+
+#[cfg(all(
+    any(test, feature = "benchmarking", feature = "softbenchmarking"),
+    feature = "secp256k1",
+    feature = "paillier",
+    feature = "bulletproofs",
+))]
+#[wasm_bindgen]
+pub fn sum(left: i32, right: i32) -> i32 {
+    left + right
+}
+
+#[wasm_bindgen]
+pub fn subtract(left: i32, right: i32) -> i32 {
+    left - right
+}
+
+#[wasm_bindgen]
+pub fn multiply(left: i32, right: i32) -> i32 {
+    left * right
+}
+
+#[wasm_bindgen]
+pub fn divide(left: i32, right: i32) -> i32 {
+    left / right
+}

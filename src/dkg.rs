@@ -1,11 +1,19 @@
 // Author: dWallet Labs, Ltd.
 // SPDX-License-Identifier: BSD-3-Clause-Clear
 
+use std::{collections::HashMap, time::Duration};
+
+use group::PartyID;
+use proof::aggregation::{CommitmentRoundParty, DecommitmentRoundParty, ProofShareRoundParty};
+use rand_core::OsRng;
+
 pub mod centralized_party;
 pub mod decentralized_party;
+use crate::localagg;
+
 
 #[cfg(all(
-    any(test, feature = "benchmarking"),
+    any(test, feature = "benchmarking", feature = "softbenchmarking"),
     feature = "secp256k1",
     feature = "paillier",
     feature = "bulletproofs",
@@ -17,12 +25,12 @@ pub(crate) mod tests {
         time::Duration,
     };
 
-    use criterion::measurement::{Measurement, WallTime};
+    // use criterion::measurement::{Measurement, WallTime};
     use group::{secp256k1, CyclicGroupElement, GroupElement, PartyID};
     use homomorphic_encryption::{
         AdditivelyHomomorphicDecryptionKey, GroupsPublicParametersAccessors,
     };
-    use proof::aggregation::test_helpers::aggregates;
+    // use proof::aggregation::test_helpers::aggregates;
     use rand::seq::IteratorRandom;
     use rand_core::OsRng;
     use rstest::rstest;
@@ -59,7 +67,7 @@ pub(crate) mod tests {
             tiresias::CiphertextSpaceValue,
         >,
     ) {
-        let measurement = WallTime;
+        // let measurement = WallTime;
         let mut centralized_party_total_time = Duration::ZERO;
         let mut decentralized_party_total_time = Duration::ZERO;
 
@@ -77,15 +85,15 @@ pub(crate) mod tests {
                 PhantomData,
             );
 
-        let now = measurement.start();
+        // let now = measurement.start();
         let (
             commitment_to_centralized_party_secret_key_share,
             centralized_party_decommitment_round_party,
         ) = centralized_party_commitment_round_party
             .sample_commit_and_prove_secret_key_share(&mut OsRng)
             .unwrap();
-        centralized_party_total_time =
-            measurement.add(&centralized_party_total_time, &measurement.end(now));
+        // centralized_party_total_time =
+        // measurement.add(&centralized_party_total_time, &measurement.end(now));
 
         let mut parties = HashSet::new();
         (1..=number_of_parties)
@@ -120,7 +128,7 @@ pub(crate) mod tests {
             decentralized_party_encryption_of_secret_key_share_parties
                 .into_iter()
                 .map(|(party_id, party)| {
-                    let now = measurement.start();
+                    // let now = measurement.start();
                     let (
                         encryption_of_secret_key_share_commitment_round_party,
                         decommitment_proof_verification_round_party,
@@ -131,8 +139,8 @@ pub(crate) mod tests {
                         )
                         .unwrap();
                     if party_id == evaluation_party_id {
-                        decentralized_party_total_time =
-                            measurement.add(&decentralized_party_total_time, &measurement.end(now));
+                        // decentralized_party_total_time =
+                        // measurement.add(&decentralized_party_total_time, &measurement.end(now));
                     };
 
                     (
@@ -152,7 +160,7 @@ pub(crate) mod tests {
                 encryption_of_decentralized_party_secret_share_proof,
                 encryption_of_decentralized_party_secret_share,
             ),
-        ) = aggregates(decentralized_party_encryption_of_secret_key_share_commitment_round_parties);
+        ) = localagg::aggregates(decentralized_party_encryption_of_secret_key_share_commitment_round_parties);
 
         let encryption_of_decentralized_party_secret_share =
             *encryption_of_decentralized_party_secret_share
@@ -164,7 +172,7 @@ pub(crate) mod tests {
             encryption_of_decentralized_party_secret_share_proof,
         );
 
-        let now = measurement.start();
+        // let now = measurement.start();
         let (
             centralized_party_public_key_share_decommitment_and_proof,
             centralized_party_dkg_output,
@@ -174,8 +182,8 @@ pub(crate) mod tests {
                 &mut OsRng,
             )
             .unwrap();
-        centralized_party_total_time =
-            measurement.add(&centralized_party_total_time, &measurement.end(now));
+        // centralized_party_total_time =
+        // measurement.add(&centralized_party_total_time, &measurement.end(now));
 
         let decentralized_party_public_key_share = secp256k1::GroupElement::new(
             centralized_party_dkg_output.decentralized_party_public_key_share,
@@ -214,7 +222,7 @@ pub(crate) mod tests {
             decentralized_party_decommitment_proof_verification_round_parties
                 .into_iter()
                 .map(|(party_id, party)| {
-                    let now = measurement.start();
+                    // let now = measurement.start();
                     let res = party
                         .verify_decommitment_and_proof_of_centralized_party_public_key_share(
                             centralized_party_public_key_share_decommitment_and_proof.clone(),
@@ -222,8 +230,8 @@ pub(crate) mod tests {
                         )
                         .unwrap();
                     if party_id == evaluation_party_id {
-                        decentralized_party_total_time =
-                            measurement.add(&decentralized_party_total_time, &measurement.end(now));
+                        // decentralized_party_total_time =
+                        // measurement.add(&decentralized_party_total_time, &measurement.end(now));
                     };
 
                     (party_id, res)
@@ -286,10 +294,10 @@ pub(crate) mod tests {
                         == dkg_output.public_key)
             }));
 
-        decentralized_party_total_time = measurement.add(
-            &decentralized_party_total_time,
-            &encryption_of_decentralized_party_secret_share_time,
-        );
+        // decentralized_party_total_time = measurement.add(
+        //     &decentralized_party_total_time,
+        //     &encryption_of_decentralized_party_secret_share_time,
+        // );
 
         println!(
             "\nProtocol, Number of Parties, Threshold, Centralized Party Total Time (ms), Decentralized Party Total Time (ms)",

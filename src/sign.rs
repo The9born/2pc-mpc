@@ -40,7 +40,7 @@ pub fn verify_signature<
 }
 
 #[cfg(all(
-    any(test, feature = "benchmarking"),
+    any(test, feature = "benchmarking", feature = "softbenchmarking"),
     feature = "secp256k1",
     feature = "paillier",
     feature = "bulletproofs",
@@ -51,7 +51,7 @@ pub(crate) mod tests {
     use std::{collections::HashMap, iter, ops::Neg, time::Duration};
 
     use commitment::{pedersen, HomomorphicCommitmentScheme, Pedersen};
-    use criterion::measurement::{Measurement, WallTime};
+    // use criterion::measurement::{Measurement, WallTime};
     use crypto_bigint::{NonZero, Uint, U256, U64};
     use ecdsa::{
         elliptic_curve::{ops::Reduce, Scalar},
@@ -172,7 +172,7 @@ pub(crate) mod tests {
         malicious_decrypter: bool,
         designated_sending_wrong_signature: bool,
     ) {
-        let measurement = WallTime;
+        // let measurement = WallTime;
         let mut centralized_party_total_time = Duration::ZERO;
         let mut decentralized_party_decryption_share_time = Duration::ZERO;
 
@@ -245,15 +245,15 @@ pub(crate) mod tests {
         let m = <Scalar<k256::Secp256k1> as Reduce<U256>>::reduce_bytes(&m);
         let m = U256::from(m).into();
 
-        let now = measurement.start();
+        // let now = measurement.start();
         let (
             public_nonce_encrypted_partial_signature_and_proof,
             signature_verification_round_party,
         ) = centralized_party_signature_homomorphic_evaluation_round_party
             .evaluate_encrypted_partial_signature_prehash(m, &mut OsRng)
             .unwrap();
-        centralized_party_total_time =
-            measurement.add(&centralized_party_total_time, &measurement.end(now));
+        // centralized_party_total_time =
+            // // measurement.add(&centralized_party_total_time, &measurement.end(now));
 
         let (decryption_key_share_public_parameters, decryption_key_shares, lagrange_coefficients) =
             setup_decryption_key_shares(threshold, number_of_parties);
@@ -320,7 +320,7 @@ pub(crate) mod tests {
         ) = decentralized_party_sign_round_parties
             .into_iter()
             .map(|(party_id, party)| {
-                let now = measurement.start();
+                // let now = measurement.start();
                 let (
                     (partial_signature_decryption_share, masked_nonce_decryption_share),
                     signature_threshold_decryption_round_party,
@@ -332,7 +332,7 @@ pub(crate) mod tests {
                     )
                     .unwrap();
                 if party_id == evaluation_party_id {
-                    decentralized_party_decryption_share_time = measurement.end(now);
+                    // decentralized_party_decryption_share_time = measurement.end(now);
                 };
 
                 (
@@ -380,13 +380,13 @@ pub(crate) mod tests {
         let (_, signature_threshold_decryption_round_party) =
             signature_threshold_decryption_round_parties.next().unwrap();
 
-        let now = measurement.start();
+        // let now = measurement.start();
         let res = signature_threshold_decryption_round_party.decrypt_signature(
             lagrange_coefficients,
             partial_signature_decryption_shares,
             masked_nonce_decryption_shares,
         );
-        let decentralized_party_threshold_decryption_time = measurement.end(now);
+        // let decentralized_party_threshold_decryption_time = measurement.end(now);
         if malicious_decrypter {
             assert!(
                 matches!(res.err().unwrap(), Error::SignatureVerification),
@@ -426,11 +426,11 @@ pub(crate) mod tests {
             },
         );
 
-        let now = measurement.start();
+        // let now = measurement.start();
         let res =
             signature_verification_round_party.verify_signature(nonce_x_coordinate, signature_s);
-        centralized_party_total_time =
-            measurement.add(&centralized_party_total_time, &measurement.end(now));
+        // centralized_party_total_time =
+            // // measurement.add(&centralized_party_total_time, &measurement.end(now));
 
         if designated_sending_wrong_signature {
             assert!(
@@ -454,7 +454,8 @@ pub(crate) mod tests {
             "Sign, {number_of_parties}, {threshold}, 1, {:?}, {:?}, {:?}",
             centralized_party_total_time.as_millis(),
             decentralized_party_decryption_share_time.as_millis(),
-            decentralized_party_threshold_decryption_time.as_millis()
+            0
+            // decentralized_party_threshold_decryption_time.as_millis()
         );
 
         assert_eq!(
@@ -980,7 +981,7 @@ pub(crate) mod tests {
 
 #[cfg(feature = "benchmarking")]
 pub(crate) mod benches {
-    use criterion::Criterion;
+    // use criterion::Criterion;
 
     pub(crate) fn benchmark(_c: &mut Criterion) {
         // TODO: for loops

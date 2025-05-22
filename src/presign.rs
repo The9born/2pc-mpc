@@ -5,9 +5,10 @@
 
 pub mod centralized_party;
 pub mod decentralized_party;
+use crate::localagg;
 
 #[cfg(all(
-    any(test, feature = "benchmarking"),
+    any(test, feature = "benchmarking", feature = "softbenchmarking"),
     feature = "secp256k1",
     feature = "paillier",
     feature = "bulletproofs",
@@ -21,7 +22,7 @@ pub(crate) mod tests {
         time::Duration,
     };
 
-    use criterion::measurement::{Measurement, WallTime};
+    // use criterion::measurement::{Measurement, WallTime};
     use crypto_bigint::{Uint, U256};
     use enhanced_maurer::{
         encryption_of_discrete_log::StatementAccessors,
@@ -33,9 +34,9 @@ pub(crate) mod tests {
         GroupsPublicParametersAccessors,
     };
     use proof::{
-        aggregation::test_helpers::{
-            aggregates, aggregates_multiple_with_decommitments, aggregates_with_decommitments,
-        },
+        // aggregation::test_helpers::{
+        //     aggregates, aggregates_multiple_with_decommitments, aggregates_with_decommitments,
+        // },
         range::bulletproofs,
     };
     use rand::prelude::IteratorRandom;
@@ -126,7 +127,7 @@ pub(crate) mod tests {
             >,
         >,
     )> {
-        let measurement = WallTime;
+        // let measurement = WallTime;
         let mut centralized_party_total_time = Duration::ZERO;
         let mut decentralized_party_total_time = Duration::ZERO;
 
@@ -164,15 +165,15 @@ pub(crate) mod tests {
             encrypted_decentralized_party_secret_key_share,
         };
 
-        let now = measurement.start();
+        // let now = measurement.start();
         let (
             centralized_party_nonce_shares_commitments_and_batched_proof,
             centralized_party_proof_verification_round_party,
         ) = centralized_party_commitment_round_party
             .sample_commit_and_prove_signature_nonce_share(batch_size, &mut OsRng)
             .unwrap();
-        centralized_party_total_time =
-            measurement.add(&centralized_party_total_time, &measurement.end(now));
+        // centralized_party_total_time =
+            // measurement.add(&centralized_party_total_time, &measurement.end(now));
 
         let mut parties = HashSet::new();
         (1..=number_of_parties)
@@ -222,7 +223,7 @@ pub(crate) mod tests {
             decentralized_party_encrypted_masked_key_share_and_public_nonce_shares_parties
                 .into_iter()
                 .map(|(party_id, party)| {
-                    let now = measurement.start();
+                    // let now = measurement.start();
                     let (
                         (
                             decentralized_party_encrypted_masked_key_share_commitment_round_party,
@@ -237,8 +238,8 @@ pub(crate) mod tests {
                         .unwrap();
 
                     if party_id == evaluation_party_id {
-                        decentralized_party_total_time =
-                            measurement.add(&decentralized_party_total_time, &measurement.end(now));
+                        // decentralized_party_total_time =
+                            // measurement.add(&decentralized_party_total_time, &measurement.end(now));
                     };
 
                     (
@@ -288,7 +289,7 @@ pub(crate) mod tests {
             ..,
             masks_and_encrypted_masked_key_share_time,
             (masks_and_encrypted_masked_key_share_proof, masks_and_encrypted_masked_key_share),
-        ) = aggregates(decentralized_party_encrypted_masked_key_share_commitment_round_parties);
+        ) = localagg::aggregates(decentralized_party_encrypted_masked_key_share_commitment_round_parties);
 
         let (
             encrypted_nonce_shares_and_public_shares_decommitments,
@@ -298,7 +299,7 @@ pub(crate) mod tests {
                 encrypted_nonce_shares_and_public_shares_proof,
                 encrypted_nonce_shares_and_public_shares,
             ),
-        ) = aggregates_with_decommitments(
+        ) = localagg::aggregates_with_decommitments(
             decentralized_party_public_nonce_shares_commitment_round_parties,
         );
 
@@ -310,12 +311,12 @@ pub(crate) mod tests {
         )
         .unwrap();
 
-        let now = measurement.start();
+        // let now = measurement.start();
         let centralized_party_presigns = centralized_party_proof_verification_round_party
             .verify_presign_output(output, &mut OsRng)
             .unwrap();
-        centralized_party_total_time =
-            measurement.add(&centralized_party_total_time, &measurement.end(now));
+        // centralized_party_total_time =
+            // measurement.add(&centralized_party_total_time, &measurement.end(now));
 
         let masks_and_encrypted_masked_key_share: Vec<_> = masks_and_encrypted_masked_key_share
             .into_iter()
@@ -374,7 +375,7 @@ pub(crate) mod tests {
         > = decentralized_party_encrypted_masked_nonce_shares_round_parties
             .into_iter()
             .map(|(party_id, party)| {
-                let now = measurement.start();
+                // let now = measurement.start();
                 let res = party
                     .initialize_proof_aggregation(
                         masks_and_encrypted_masked_key_share.clone(),
@@ -384,8 +385,8 @@ pub(crate) mod tests {
                     .unwrap();
 
                 if party_id == evaluation_party_id {
-                    decentralized_party_total_time =
-                        measurement.add(&decentralized_party_total_time, &measurement.end(now));
+                    // decentralized_party_total_time =
+                    //     measurement.add(&decentralized_party_total_time, &measurement.end(now));
                 };
 
                 (party_id, res)
@@ -397,7 +398,7 @@ pub(crate) mod tests {
             ..,
             encrypted_masked_nonce_shares_time,
             res,
-        ) = aggregates_multiple_with_decommitments(
+        ) = localagg::aggregates_multiple_with_decommitments(
             decentralized_party_encrypted_masked_nonce_shares_commitment_round_parties,
         );
 
@@ -492,18 +493,18 @@ pub(crate) mod tests {
                         == decentralized_party_presign.encrypted_masked_key_share
             }));
 
-        decentralized_party_total_time = measurement.add(
-            &decentralized_party_total_time,
-            &encrypted_masked_nonce_shares_time,
-        );
-        decentralized_party_total_time = measurement.add(
-            &decentralized_party_total_time,
-            &encrypted_nonce_shares_and_public_shares_time,
-        );
-        decentralized_party_total_time = measurement.add(
-            &decentralized_party_total_time,
-            &masks_and_encrypted_masked_key_share_time,
-        );
+        // decentralized_party_total_time = measurement.add(
+        //     &decentralized_party_total_time,
+        //     &encrypted_masked_nonce_shares_time,
+        // );
+        // decentralized_party_total_time = measurement.add(
+        //     &decentralized_party_total_time,
+        //     &encrypted_nonce_shares_and_public_shares_time,
+        // );
+        // decentralized_party_total_time = measurement.add(
+        //     &decentralized_party_total_time,
+        //     &masks_and_encrypted_masked_key_share_time,
+        // );
 
         println!("\nProtocol, Number of Parties, Threshold, Batch Size, Centralized Party Total Time (ms), Decentralized Party Total Time (ms)", );
 
