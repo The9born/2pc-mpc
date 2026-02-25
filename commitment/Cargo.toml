@@ -1,0 +1,20 @@
+[package]
+name = "commitment"
+version = "0.2.0"
+edition = "2021"
+license = "BSD-3-Clause-Clear"
+
+[dependencies]
+group = { path = "/Users/mymac/.cargo/git/checkouts/inkrypto-fbd0c7a171d8e5a6/3ae2d07/group" }
+crypto-bigint = { version = "=0.7.0-rc.9", features = ["rand_core", "serde"], default-features = false }
+serde = { version = "1.0", features = ["derive"] }
+merlin = { version = "3", default-features = false }
+thiserror = "2.0"
+
+[dev-dependencies]
+subtle = { version = "=2.6.1" }
+group = { path = "/Users/mymac/.cargo/git/checkouts/inkrypto-fbd0c7a171d8e5a6/3ae2d07/group", features = ["os_rng", "test_helpers"] }
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+
+[features]
+test_helpers = ["group/os_rng"]

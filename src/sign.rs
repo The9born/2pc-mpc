@@ -355,7 +355,7 @@ pub(crate) mod tests {
         if malicious_decrypter {
             partial_signature_decryption_shares.insert(
                 malicious_decrypter_party_id,
-                PaillierModulusSizedNumber::ZERO,
+                PaillierModulusSizedNumber::ONE,
             );
         }
 
